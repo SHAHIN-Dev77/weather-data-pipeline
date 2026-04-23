@@ -4,6 +4,14 @@ import os
 from datetime import datetime
 import logging
 
+os.makedirs("logs", exist_ok=True) 
+logging.basicConfig(
+    filename='logs/api.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    encoding='utf-8'  # Recommended for modern Python versions
+)
+
 def fetch_weather_data():
     url = ("https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&daily=sunrise&hourly=temperature_2m,soil_temperature_0cm&timezone=Asia%2FSingapore"
     )

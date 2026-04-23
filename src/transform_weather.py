@@ -1,6 +1,17 @@
 import json
 import os
 from datetime import datetime
+import logging
+
+# Configure logging to write to api.log
+os.makedirs("logs", exist_ok=True) 
+logging.basicConfig(
+    filename='logs/api.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    encoding='utf-8'  # Recommended for modern Python versions
+)
+
 
 def get_latest_bronze_file(bronze_folder="data/bronze"):
     """
@@ -39,10 +50,20 @@ def clean_weather(raw_json, city_name="Singapore"):
     times = hourly.get("time", [])
     temps = hourly.get("temperature_2m", [])
     soil_temps = hourly.get("soil_temperature_0cm", [])
+   # Check for missing data
     if not times or not temps or not soil_temps:
-        raise ValueError("Missing 'time', 'temperature_2m', or 'soil_temperature_0cm' in JSON.")
+        error_msg = "Missing 'time', 'temperature_2m', or 'soil_temperature_0cm' in JSON."
+        logging.error(error_msg) # Records the error in api.log
+        raise ValueError(error_msg)
+
+# Check for length mismatch
     if len(times) != len(temps) or len(times) != len(soil_temps):
-        raise ValueError("Length mismatch between time, temperature, and soil lists.")
+        error_msg = f"Length mismatch: times({len(times)}), temps({len(temps)}), soil({len(soil_temps)})"
+        logging.error(error_msg)
+        raise ValueError(error_msg)
+
+    # If it reaches here, the data is valid
+    logging.info(f"Data validation successful. Processed {len(times)} records.")
     rows = []
     for t, temp, soil_temp in zip(times, temps, soil_temps):
         rows.append(
@@ -71,19 +92,19 @@ def save_to_silver(rows, silver_folder="data/silver"):
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
-    print(f"[OK] Cleaned data saved {filepath}")
+    logging.info(f"[OK] Cleaned data saved {filepath}")
 
 def main():
-    print("Loading latest bronze file...")
+    logging.info("Loading latest bronze file...")
     bronze_path = get_latest_bronze_file()
-    print(f"Using bronze file: {bronze_path}")
+    logging.info(f"Using bronze file: {bronze_path}")
     raw_json = load_bronze_json(bronze_path)
-    print("Cleaning weather data into tabular format...")
+    logging.info("Cleaning weather data into tabular format...")
     rows = clean_weather(raw_json, city_name="Singapore")
-    print(f"Total rows: {len(rows)}")
-    print("Saving to silver layer as CSV...")
+    logging.info(f"Total rows: {len(rows)}")
+    logging.info("Saving to silver layer as CSV...")
     save_to_silver(rows)
-    print("Silver layer updated successfully.")
+    logging.info("Silver layer updated successfully.")
 
 if __name__ == "__main__":
     main()
