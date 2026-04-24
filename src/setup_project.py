@@ -1,15 +1,7 @@
 import os 
 from datetime import datetime
-import logging
-
-# Configure logging to write to api.log
-os.makedirs("logs", exist_ok=True) 
-logging.basicConfig(
-    filename='logs/api.log',
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    encoding='utf-8'  # Recommended for modern Python versions
-)
+from src.logger import get_logger
+logger = get_logger(__name__)       
 
 
 
@@ -28,18 +20,18 @@ def create_folders():
     
     for folder in folders:
         os.makedirs(folder, exist_ok=True)
-        logging.info(f"[OK] Folder ready: {folder}")
+        logger.info(f"[OK] Folder ready: {folder}")
 def show_structure():
     for root, dirs, files in os.walk("."):
-        logging.info(root)
+        logger.info(root)
         for d in dirs:
-            logging.info(f"  ┗ {d}/")
+            logger.info(f"  ┗ {d}/")
 def main():
-    logging.info("Starting project setup...")
-    logging.info(f"Time: {datetime.now()}")
+    logger.info("Starting project setup...")
+    logger.info(f"Time: {datetime.now()}")
     create_folders()
-    logging.info("\nProject structure:")
+    logger.info("\nProject structure:")
     show_structure()
-    logging.info("\nSetup completed successfully.")
+    logger.info("\nSetup completed successfully.")
 if __name__ == "__main__":
     main()

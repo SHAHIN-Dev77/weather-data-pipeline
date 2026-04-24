@@ -1,16 +1,8 @@
 import json
 import os
 from datetime import datetime
-import logging
-
-# Configure logging to write to api.log
-os.makedirs("logs", exist_ok=True) 
-logging.basicConfig(
-    filename='logs/api.log',
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    encoding='utf-8'  # Recommended for modern Python versions
-)
+from src.logger import get_logger
+logger = get_logger(__name__)   
 
 
 def get_latest_bronze_file(bronze_folder="data/bronze"):
@@ -18,12 +10,14 @@ def get_latest_bronze_file(bronze_folder="data/bronze"):
     Finds the most recent JSON file in the bronze folder.
     """
     if not os.path.exists(bronze_folder):
+        logger.error(f"Bronze folder not found: {bronze_folder}")
         raise FileNotFoundError(f"Bronze folder not found: {bronze_folder}")
     files = [
         f for f in os.listdir(bronze_folder)
         if f.endswith(".json")
     ]
     if not files:
+        logger.error("No JSON files found in bronze layer.")
         raise FileNotFoundError("No JSON files found in bronze layer.")
     # Sort files by name; if you used date-based names this works well
     files.sort()
@@ -53,17 +47,17 @@ def clean_weather(raw_json, city_name="Singapore"):
    # Check for missing data
     if not times or not temps or not soil_temps:
         error_msg = "Missing 'time', 'temperature_2m', or 'soil_temperature_0cm' in JSON."
-        logging.error(error_msg) # Records the error in api.log
+        logger.error(error_msg) # Records the error in api.log
         raise ValueError(error_msg)
 
 # Check for length mismatch
     if len(times) != len(temps) or len(times) != len(soil_temps):
         error_msg = f"Length mismatch: times({len(times)}), temps({len(temps)}), soil({len(soil_temps)})"
-        logging.error(error_msg)
+        logger.error(error_msg)
         raise ValueError(error_msg)
 
     # If it reaches here, the data is valid
-    logging.info(f"Data validation successful. Processed {len(times)} records.")
+    logger.info(f"Data validation successful. Processed {len(times)} records.")
     rows = []
     for t, temp, soil_temp in zip(times, temps, soil_temps):
         rows.append(
@@ -92,19 +86,19 @@ def save_to_silver(rows, silver_folder="data/silver"):
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
-    logging.info(f"[OK] Cleaned data saved {filepath}")
+    logger.info(f"[OK] Cleaned data saved {filepath}")
 
 def main():
-    logging.info("Loading latest bronze file...")
+    logger.info("Loading latest bronze file...")
     bronze_path = get_latest_bronze_file()
-    logging.info(f"Using bronze file: {bronze_path}")
+    logger.info(f"Using bronze file: {bronze_path}")
     raw_json = load_bronze_json(bronze_path)
-    logging.info("Cleaning weather data into tabular format...")
+    logger.info("Cleaning weather data into tabular format...")
     rows = clean_weather(raw_json, city_name="Singapore")
-    logging.info(f"Total rows: {len(rows)}")
-    logging.info("Saving to silver layer as CSV...")
+    logger.info(f"Total rows: {len(rows)}")
+    logger.info("Saving to silver layer as CSV...")
     save_to_silver(rows)
-    logging.info("Silver layer updated successfully.")
+    logger.info("Silver layer updated successfully.")
 
 if __name__ == "__main__":
     main()
