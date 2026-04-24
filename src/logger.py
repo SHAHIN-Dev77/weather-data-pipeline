@@ -6,8 +6,8 @@ def get_logger(name: str) -> logging.Logger:
     # Make sure logs folder exists
     os.makedirs("logs", exist_ok=True)
 
-    # Log file per day, e.g. logs/2025-01-22.log
-    log_filename = datetime.now().strftime("logs/%Y-%m-%d.log")
+    # Log file per day, e.g. logs/22-01-2025.log
+    log_filename = datetime.now().strftime("logs/%d-%m-%Y.log")
 
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)

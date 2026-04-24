@@ -1,16 +1,16 @@
 import pandas as pd
 import os
 from sqlalchemy import create_engine, text
-from src.logger import get_logger
+from logger import get_logger
+from config_loader import load_config
 logger = get_logger(__name__)
-
-
-silver_folder = 'data/silver'
-DB_URL="postgresql://postgres:shahin2013@localhost:5432/weather_db"
+config = load_config()
+paths_cfg = config["paths"]
+DB_URL =paths_cfg["database_path"]
 
 def get_latest_silver_file():
     csv_paths = [
-        f for f in os.listdir(silver_folder) 
+        f for f in os.listdir(paths_cfg["silver_dir"]) 
         if f.endswith('.csv')
         ]
     if not csv_paths:
@@ -18,7 +18,7 @@ def get_latest_silver_file():
         return None
     csv_paths.sort()
     latest_file=csv_paths[-1]
-    return os.path.join(silver_folder, latest_file)
+    return os.path.join(paths_cfg["silver_dir"], latest_file)
 
 def get_engine():
     return create_engine(DB_URL)

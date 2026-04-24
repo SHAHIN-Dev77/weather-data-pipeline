@@ -1,13 +1,16 @@
 import pandas as pd
 import os
 from datetime import datetime
-from src.logger import get_logger
+from logger import get_logger
+from config_loader import load_config
 logger = get_logger(__name__)
+config = load_config()
+paths_cfg = config["paths"]
 
 def csv_to_parquet():
     # Read the CSV file into a DataFrame
-    silver_folder = 'data/silver'
-    gold_folder = 'data/gold'
+    silver_folder = paths_cfg["silver_dir"]
+    gold_folder = paths_cfg["gold_dir"]
     os.makedirs(gold_folder, exist_ok=True)    
     csv_file=[f for f in os.listdir(silver_folder) 
               if f.endswith('.csv') 

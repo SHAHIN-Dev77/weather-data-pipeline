@@ -1,11 +1,17 @@
 import json
 import os
 from datetime import datetime
-from src.logger import get_logger
+from config_loader import load_config
+from logger import get_logger
 logger = get_logger(__name__)   
 
 
-def get_latest_bronze_file(bronze_folder="data/bronze"):
+config = load_config()
+city_name = config["city"]
+paths_cfg= config["paths"]
+api_config = config["weather_api"]
+
+def get_latest_bronze_file(bronze_folder=paths_cfg["bronze_dir"]):
     """
     Finds the most recent JSON file in the bronze folder.
     """
@@ -32,7 +38,7 @@ def load_bronze_json(filepath):
         data = json.load(f)
     return data
 
-def clean_weather(raw_json, city_name="Singapore"):
+def clean_weather(raw_json, city_name=city_name):
     """
     Transforms raw Open-Meteo JSON into a list of rows:
     [
@@ -70,13 +76,13 @@ def clean_weather(raw_json, city_name="Singapore"):
         )
     return rows
 
-def save_to_silver(rows, silver_folder="data/silver"):
+def save_to_silver(rows, silver_folder=paths_cfg["silver_dir"]):
     """
     Saves the cleaned rows to a CSV file in the silver layer.
     File name example: data/silver/clean_2025-01-22.csv
     """
     os.makedirs(silver_folder, exist_ok=True)
-    today_str = datetime.now().strftime("%Y-%m-%d")
+    today_str = datetime.now().strftime("%d-%m-%y")
     filename = f"clean_{today_str}.csv"
     filepath = os.path.join(silver_folder, filename)
     # We will use the built-in csv module to keep it very "Python basics"
@@ -94,7 +100,7 @@ def main():
     logger.info(f"Using bronze file: {bronze_path}")
     raw_json = load_bronze_json(bronze_path)
     logger.info("Cleaning weather data into tabular format...")
-    rows = clean_weather(raw_json, city_name="Singapore")
+    rows = clean_weather(raw_json, city_name=city_name)
     logger.info(f"Total rows: {len(rows)}")
     logger.info("Saving to silver layer as CSV...")
     save_to_silver(rows)
